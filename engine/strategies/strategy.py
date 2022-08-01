@@ -18,3 +18,7 @@ class Strategy:
     @abc.abstractmethod
     def check_risk(self):
         pass
+
+    @abc.abstractmethod
+    def terminate(self):
+        pass
