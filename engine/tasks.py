@@ -1,4 +1,3 @@
-import imp
 from celery import shared_task
 from .algo_engine import Engine
 
@@ -11,3 +10,9 @@ def run(strategy_id: int):
 @shared_task
 def check_risk(strategy_id):
     Engine.check_risk(strategy_id)
+
+
+@shared_task
+def terminate(strategy_id):
+    Engine.terminate(strategy_id)
+

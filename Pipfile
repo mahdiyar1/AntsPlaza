@@ -12,6 +12,8 @@ django-celery-beat = "*"
 django-debug-toolbar = "*"
 djangorestframework = "*"
 mysqlclient = "*"
+redis = "*"
+flower = "*"
 
 [dev-packages]
 autopep8 = "*"
