@@ -10,7 +10,6 @@ class Persistence():
         self.strategy = strategy
 
     def save_borrow_order(self, result):
-        # TODO think is a better way
         borrow = Borrow()
         borrow.id = result['orderId']
         borrow.amount = Decimal(result['filled'])
@@ -19,15 +18,13 @@ class Persistence():
         borrow.strategy_id = self.strategy.strategy_id
         borrow.strategy_execution_id = self.strategy.execution_id
         borrow.trader_id = self.strategy.trader_id
-        # TODO handle status
         borrow.status = 'open'
         # TODO handle multiply borrow trade
         borrow.daily_interest_rate = result['matchList'][0]['dailyIntRate']
-        borrow.interest =borrow.amount * Decimal(borrow.daily_interest_rate)
+        borrow.interest = borrow.amount * Decimal(borrow.daily_interest_rate)
         borrow.save()
 
     def save_order(self, result, position, is_fund_provide_order=False):
-        # TODO think is a better way
         order = Order()
         order.amount = Decimal(result['amount'])
         order.average = Decimal(result['average'])
@@ -62,6 +59,5 @@ class Persistence():
         order.save()
 
     def handle_exchange_symbol_separator(self, symbol: str):
-        # TODO think is a better way
         exchange_symbol_separator = self.strategy.exchange_information.symbol_separator
         return symbol.replace('/', exchange_symbol_separator)

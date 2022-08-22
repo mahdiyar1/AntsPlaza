@@ -1,6 +1,6 @@
 from .helper import Helper
 from ...symbol_kline import SymbolKline
-from ...models import StrategyExecution, StrategySetting
+from ...models import StrategyExecution, StrategySetting, Symbol
 
 
 class Risk():
@@ -15,65 +15,78 @@ class Risk():
         interest = self.helper.get_borrow_order().interest
 
         buy_amount = sell_order.amount + interest
-        current_price = SymbolKline.symbols_kline_open_1min[sell_order.symbol.id]
+        current_price = Symbol.objects.get(
+            pk=sell_order.symbol.id).kline_open_1_min
 
-        adjusted_current_price = self.calculate_fee_included_buy_price(sell_order.symbol, current_price, buy_amount)
+        adjusted_data = self.calculate_fee_included_buy_price(
+            sell_order.symbol, current_price, buy_amount)
+
+        adjusted_current_price = adjusted_data[0]
         sell_price = sell_order.average_price_fee_included
 
-        ratio = (sell_price - adjusted_current_price) / sell_price
+        return_ratio = (sell_price - adjusted_current_price) / sell_price
 
-        ratio = ratio * self.strategy.leverage
+        return_ratio = return_ratio * self.strategy.leverage
 
-        if ratio >= 0:
+        if return_ratio >= 0:
             profit_ratio = StrategySetting.objects.filter(
                 strategy_id=self.strategy.strategy_id, name='short_take_profit_ratio').first().value
-            if ratio > profit_ratio:                
-                self.strategy.short.cancel()
-                # TODO close short position result
-                execution = StrategyExecution.objects.get(pk=self.strategy.execution_id)
-                execution.last_short_return = ratio
+            if return_ratio > profit_ratio:
+                self.strategy.terminate_short()
+                execution = StrategyExecution.objects.get(
+                    pk=self.strategy.execution_id)
+                execution.last_short_return_ratio = return_ratio
                 execution.save()
-            return ratio
+            return return_ratio
 
         loss_ratio = StrategySetting.objects.filter(
             strategy_id=self.strategy.strategy_id, name='short_stop_loss_ratio').first().value
-        if -ratio > loss_ratio:
-            self.strategy.short.cancel()
-                # TODO close short position result
-            execution = StrategyExecution.objects.get(pk=self.strategy.execution_id)
-            execution.last_short_return = ratio
+        if -return_ratio > loss_ratio:
+            self.strategy.terminate_short()
+            # TODO close short position result
+            execution = StrategyExecution.objects.get(
+                pk=self.strategy.execution_id)
+            execution.last_short_return_ratio = return_ratio
             execution.save()
-        return ratio
+        
+        short_return =  sell_order.cost_fee_adjusted - adjusted_data[1]
+
+        return [return_ratio, short_return]
 
     def long(self):
         buy_order = self.helper.get_long_buy_order()
         buy_price = buy_order.average_price_fee_included
-        current_price = SymbolKline.symbols_kline_open_1min[buy_order.symbol.id]
-        adjusted_current_price = self.calculate_fee_included_sell_price(buy_order.symbol, current_price, buy_order.amount)
-        ratio = (adjusted_current_price - buy_price) / buy_price
+        current_price = Symbol.objects.get(
+            pk=buy_order.symbol.id).kline_open_1_min
+        adjusted_data = self.calculate_fee_included_sell_price(
+            buy_order.symbol, current_price, buy_order.amount)
+        adjusted_current_price = adjusted_data[0]
+        return_ratio = (adjusted_current_price - buy_price) / buy_price
 
-        ratio = ratio * self.strategy.leverage
+        return_ratio = return_ratio * self.strategy.leverage
 
-        if ratio >= 0:
+        if return_ratio >= 0:
             profit_ratio = StrategySetting.objects.filter(
                 strategy_id=self.strategy.strategy_id, name='long_take_profit_ratio').first().value
-            if ratio > profit_ratio:
-                self.strategy.long.cancel()
-                #TODO return result
-                execution = StrategyExecution.objects.get(pk=self.strategy.execution_id)
-                execution.last_long_return = ratio
+            if return_ratio > profit_ratio:
+                self.strategy.terminate_long()
+                execution = StrategyExecution.objects.get(
+                    pk=self.strategy.execution_id)
+                execution.last_long_return_ratio = return_ratio
                 execution.save()
-            return ratio
+            return return_ratio
 
         loss_ratio = StrategySetting.objects.filter(
             strategy_id=self.strategy.strategy_id, name='long_stop_loss_ratio').first().value
-        if -ratio > loss_ratio:
-            self.strategy.long.cancel()
-            #TODO return result
-            execution = StrategyExecution.objects.get(pk=self.strategy.execution_id)
-            execution.last_long_return = ratio
+        if -return_ratio > loss_ratio:
+            self.strategy.terminate_long()
+            execution = StrategyExecution.objects.get(
+                pk=self.strategy.execution_id)
+            execution.last_long_return_ratio = return_ratio
             execution.save()
-        return ratio
+
+        long_return = adjusted_data[1] - buy_order.cost_fee_adjusted
+        return [return_ratio, long_return]
 
     def portfolio(self, short_ratio, long_ratio):
         portfolio_ratio = short_ratio + long_ratio
@@ -87,7 +100,6 @@ class Risk():
 
         loss_ratio = StrategySetting.objects.filter(
             strategy_id=self.strategy.strategy_id, name='portfolio_stop_loss_ratio').first().value
-
         if -portfolio_ratio > loss_ratio:
             self.strategy.terminate()
 
@@ -95,10 +107,10 @@ class Risk():
         cost = current_price * amount
         adjusted_cost = cost + cost * symbol.maker_fee_rate
         adjusted_price = adjusted_cost / amount
-        return adjusted_price
+        return [adjusted_price, adjusted_cost]
 
     def calculate_fee_included_sell_price(self, symbol, current_price, amount):
         cost = current_price * amount
         adjusted_cost = cost - cost * symbol.maker_fee_rate
         adjusted_price = adjusted_cost / amount
-        return adjusted_price
+        return [adjusted_price, adjusted_cost]

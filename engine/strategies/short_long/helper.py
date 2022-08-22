@@ -1,7 +1,7 @@
-from decimal import Decimal
 import time
+from decimal import Decimal
 from math import ceil, floor
-from ...models import Borrow, Order, StrategySymbol, Symbol
+from ...models import Borrow, Order, StrategyExecution, StrategySymbol, Symbol
 
 
 class Helper():
@@ -10,24 +10,23 @@ class Helper():
         self.strategy = strategy
 
     def get_short_symbol(self):
+        strategy_execution_task_id = StrategyExecution.objects.filter(pk=self.strategy.execution_id).first().task_id
         return StrategySymbol.objects.select_related('symbol').filter(
-            strategy_id=self.strategy.strategy_id, position='short').first().symbol  # TODO design in a way that guaranty symbol is available
+            strategy_id=self.strategy.strategy_id, position='short', strategy_execution_task_id=strategy_execution_task_id).first().symbol
 
     def get_long_symbol(self):
+        strategy_execution_task_id = StrategyExecution.objects.filter(pk=self.strategy.execution_id).first().strategy_execution_task_id
         return StrategySymbol.objects.select_related('symbol').filter(
-            strategy_id=self.strategy.strategy_id, position='long').first().symbol  # TODO design in a way that guaranty symbol is available
+            strategy_id=self.strategy.strategy_id, position='long',strategy_execution_task_id=strategy_execution_task_id).first().symbol
 
     def get_short_sell_order(self):
-        return Order.objects.filter(trader_id=self.strategy.trader_id, strategy_id=self.strategy.strategy_id,
-                                    strategy_execution_id=self.strategy.execution_id, position='short', side='sell').first()
+        return Order.objects.filter(strategy_execution_id=self.strategy.execution_id, position='short', side='sell').first()
 
     def get_long_buy_order(self):
-        return Order.objects.filter(trader_id=self.strategy.trader_id, strategy_id=self.strategy.strategy_id,
-                                    strategy_execution_id=self.strategy.execution_id, position='long', side='buy').first()
+        return Order.objects.filter(strategy_execution_id=self.strategy.execution_id, position='long', side='buy').first()
 
     def get_borrow_order(self):
-        return Borrow.objects.filter(trader_id=self.strategy.trader_id, strategy_id=self.strategy.strategy_id,
-                                     strategy_execution_id=self.strategy.execution_id).first()
+        return Borrow.objects.filter(strategy_execution_id=self.strategy.execution_id).first()
 
     def get_fee_rate(self, symbol):
         return Symbol.objects.get(pk=symbol.id).maker_fee_rate
@@ -59,7 +58,7 @@ class Helper():
         amount = ceil(amount * pow(10, precision)) / float(pow(10, precision))
         return amount
 
-    def watch_and_fetch_result(self, method, argument, condition, delay, result_key_level_1=None, result_key_level_2=None):
+    def watch_and_fetch_result(self, method, argument, condition, result_key_level_1=None, result_key_level_2=None, delay=0):
         result = None
 
         while result != condition:
@@ -80,3 +79,21 @@ class Helper():
         for balance in margin_balances:
             if balance['currency'] == currency:
                 return Decimal(balance['availableBalance'])
+
+    def calculate_short_buy_total_costs(self):
+        total_cost = 0
+        orders = Order.objects.filter(
+            strategy_execution_id=self.strategy.execution_id, side='buy', position='short')
+        for order in orders:
+            total_cost = total_cost + order.cost_fee_adjusted
+
+        return total_cost
+
+    def calculate_long_sell_total_cost(self):
+        total_cost = 0
+        orders = Order.objects.filter(
+            strategy_execution_id=self.strategy.execution_id, side='sell', position='long')
+        for order in orders:
+            total_cost = total_cost + order.cost_fee_adjusted
+
+        return total_cost

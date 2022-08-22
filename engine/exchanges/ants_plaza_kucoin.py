@@ -41,6 +41,3 @@ class AntsPlazakucoin(kucoin, AntsPlazaExchange):
 
     def repay_margin(self, currency, sequence, amount):
         return self.margin_client.click_to_repayment(currency, sequence, amount)
-
-    def fetch_margin_config(self):
-        return self.margin_client.get_margin_config()

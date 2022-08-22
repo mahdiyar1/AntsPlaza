@@ -7,13 +7,10 @@ class Strategy:
     def __init__(self, exchange, trader_id, strategy_id, exchange_information):
         self.exchange = exchange
         self.trader_id = trader_id
-        self.strategy_id = strategy_id
-        self.execution_id = None
+        self.strategy_id = strategy_id        
         self.exchange_information = exchange_information
-
-    @abc.abstractmethod
-    def run(self, execution_id):
-        pass
+        self.execution_id = None
+        self.leverage = None
 
     @abc.abstractmethod
     def check_risk(self):

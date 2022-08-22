@@ -21,9 +21,5 @@ class AntsPlazaExchange():
         pass
 
     @abstractclassmethod
-    def repay_margin(self, currency, sequence, size):        
-        pass
-    
-    @abstractclassmethod
-    def fetch_margin_config(self):
+    def repay_margin(self, currency, sequence, size):
         pass

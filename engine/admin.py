@@ -34,17 +34,7 @@ class StrategySettingAdmin(admin.ModelAdmin):
 
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(models.Trade)
-class TradeAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(models.MarginBalance)
-class BalanceAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['is_fund_provide_order']
 
 
 @admin.register(models.Symbol)

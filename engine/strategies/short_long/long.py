@@ -1,4 +1,5 @@
-from ...models import StrategyExecution
+import datetime
+from ...models import Order, StrategyExecution
 from .persistance import Persistence
 from .helper import Helper
 
@@ -19,9 +20,16 @@ class Long():
             symbol, fund=fund)
 
         result = self.strategy.exchange.create_market_margin_order(
-            symbol.id, 'buy', 'test1', fund=fund_adjusted)  # TODO handle client order id
+            symbol.id, 'buy', fund=fund_adjusted)
 
         self.handle_order_result(result)
+
+        execution = StrategyExecution.objects.get(
+            pk=self.strategy.execution_id)
+        execution.is_long_success = True
+        execution.long_buy_cost = Order.objects.filter(
+            strategy_execution_id=self.strategy.execution_id, side='buy', position='long').first().cost_fee_adjusted
+        execution.save()
 
     def cancel(self):
         symbol = self.helper.get_long_symbol()
@@ -35,28 +43,31 @@ class Long():
             symbol.id, 'sell', 'test2', amount=amount_adjusted)  # TODO handle round currency and client order id and extract an function
 
         self.handle_order_result(result)
-        #TODO return success or not
-        execution = StrategyExecution.objects.get(pk=self.strategy.execution_id)
+        execution = StrategyExecution.objects.get(
+            pk=self.strategy.execution_id)
         execution.is_long_closed = True
+        execution.long_sell_cost = self.helper.calculate_long_sell_total_cost()
+        if execution.is_short_closed == True:
+            execution.is_strategy_end = True
+            execution.date_time_end = datetime.now()
         execution.save()
 
     def handle_order_result(self, result):
-        # TODO handle errors
         order_id = result['orderId']
         order_result = self.helper.watch_and_fetch_result(
-            self.strategy.exchange.fetch_order, order_id, 'closed', 0.3, 'status')  # TODO magic number
+            self.strategy.exchange.fetch_order, order_id, 'closed', result_key_level_1='status')
         self.persistance.save_order(order_result, 'long')
 
     def sell_partial(self, fund_adjusted):
         symbol = self.helper.get_long_symbol()
         result = self.strategy.exchange.create_market_margin_order(
-            symbol.id, 'sell', 'test1', fund=fund_adjusted)  # TODO handle round usdt and client order id
+            symbol.id, 'sell', fund=fund_adjusted)
 
         self.handle_partial_result(result)
 
-    def handle_partial_result(self,result):
+    def handle_partial_result(self, result):
         order_id = result['orderId']
         order_result = self.helper.watch_and_fetch_result(
-            self.strategy.exchange.fetch_order, order_id, 'closed', 0.3, 'status')  # TODO magic number
-        self.persistance.save_order(order_result, 'long', is_fund_provide_order=True)
-
+            self.strategy.exchange.fetch_order, order_id, 'closed', result_key_level_1='status')  # TODO magic number
+        self.persistance.save_order(
+            order_result, 'long', is_fund_provide_order=True)

@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='borrow',
             name='interest',
-            field=models.DecimalField(decimal_places=12, default=0.1, max_digits=24),
+            field=models.DecimalField(
+                decimal_places=12, default=0.1, max_digits=24),
             preserve_default=False,
         ),
     ]
