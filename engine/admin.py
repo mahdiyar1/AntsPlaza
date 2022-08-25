@@ -24,7 +24,7 @@ class StrategyClassAdmin(admin.ModelAdmin):
 
 @admin.register(models.Strategy)
 class StrategyAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['id', 'last_strategy_execution_id']
 
 
 @admin.register(models.StrategySetting)
@@ -44,7 +44,8 @@ class SymbolAdmin(admin.ModelAdmin):
 
 @admin.register(models.StrategySymbol)
 class StrategySymbolAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['id', 'symbol_id', 'position',
+                    'strategy_id', 'strategy_execution_task_id']
 
 
 @admin.register(models.Borrow)

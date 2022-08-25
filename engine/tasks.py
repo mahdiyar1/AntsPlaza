@@ -3,6 +3,7 @@ from celery.signals import celeryd_after_setup
 from celery import shared_task
 from .kucoin_websocket_feed import market_data_feed
 from .algo_engine import Engine
+from django_celery_beat.models import PeriodicTask
 
 
 @shared_task
@@ -36,7 +37,8 @@ def terminate(strategy_id):
 
 
 @shared_task
-def run_short_all(strategy_execution_task_id):
+def run_short_all(strategy_execution_task_name):
+    strategy_execution_task_id =  PeriodicTask.objects.filter(name=strategy_execution_task_name).first().id
     Engine.run_short_all(strategy_execution_task_id)
 
 

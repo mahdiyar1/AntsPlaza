@@ -10,15 +10,23 @@ class Helper():
         self.strategy = strategy
 
     def get_short_symbol(self):
-        strategy_execution_task_id = StrategyExecution.objects.filter(pk=self.strategy.execution_id).first().task_id
-        return StrategySymbol.objects.select_related('symbol').filter(
-            strategy_id=self.strategy.strategy_id, position='short', strategy_execution_task_id=strategy_execution_task_id).first().symbol
+        strategy_execution_task_id = StrategyExecution.objects.filter(
+            pk=self.strategy.execution_id).first().task_id
+        symbol = StrategySymbol.objects.select_related('symbol').filter(
+            strategy_id=self.strategy.strategy_id, position='short',
+            strategy_execution_task_id=strategy_execution_task_id).first().symbol
+        
+        return symbol
 
     def get_long_symbol(self):
-        strategy_execution_task_id = StrategyExecution.objects.filter(pk=self.strategy.execution_id).first().strategy_execution_task_id
-        return StrategySymbol.objects.select_related('symbol').filter(
-            strategy_id=self.strategy.strategy_id, position='long',strategy_execution_task_id=strategy_execution_task_id).first().symbol
+        strategy_execution_task_id = StrategyExecution.objects.filter(
+            pk=self.strategy.execution_id).first().task_id
+        symbol = StrategySymbol.objects.select_related('symbol').filter(
+            strategy_id=self.strategy.strategy_id, position='long',
+            strategy_execution_task_id=strategy_execution_task_id).first().symbol
 
+        return symbol
+        
     def get_short_sell_order(self):
         return Order.objects.filter(strategy_execution_id=self.strategy.execution_id, position='short', side='sell').first()
 

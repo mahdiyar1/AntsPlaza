@@ -1,5 +1,4 @@
 from .helper import Helper
-from ...symbol_kline import SymbolKline
 from ...models import StrategyExecution, StrategySetting, Symbol
 
 
@@ -37,7 +36,9 @@ class Risk():
                     pk=self.strategy.execution_id)
                 execution.last_short_return_ratio = return_ratio
                 execution.save()
-            return return_ratio
+
+            short_return = sell_order.cost_fee_adjusted - adjusted_data[1]
+            return [return_ratio, short_return]
 
         loss_ratio = StrategySetting.objects.filter(
             strategy_id=self.strategy.strategy_id, name='short_stop_loss_ratio').first().value
@@ -48,8 +49,8 @@ class Risk():
                 pk=self.strategy.execution_id)
             execution.last_short_return_ratio = return_ratio
             execution.save()
-        
-        short_return =  sell_order.cost_fee_adjusted - adjusted_data[1]
+
+        short_return = sell_order.cost_fee_adjusted - adjusted_data[1]
 
         return [return_ratio, short_return]
 
@@ -74,7 +75,10 @@ class Risk():
                     pk=self.strategy.execution_id)
                 execution.last_long_return_ratio = return_ratio
                 execution.save()
-            return return_ratio
+            
+            long_return = adjusted_data[1] - buy_order.cost_fee_adjusted
+
+            return [return_ratio, long_return]
 
         loss_ratio = StrategySetting.objects.filter(
             strategy_id=self.strategy.strategy_id, name='long_stop_loss_ratio').first().value
@@ -86,6 +90,7 @@ class Risk():
             execution.save()
 
         long_return = adjusted_data[1] - buy_order.cost_fee_adjusted
+
         return [return_ratio, long_return]
 
     def portfolio(self, short_ratio, long_ratio):
