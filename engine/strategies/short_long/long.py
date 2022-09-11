@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from ...models import Order, StrategyExecution
 from .persistance import Persistence
 from .helper import Helper

@@ -22,6 +22,11 @@ class ShortLong(strategy.Strategy):
     def run_short(self, execution_id):
         self.execution_id = execution_id
         self.save_execution_leverage()
+        strategy_execution = StrategyExecution.objects.get(
+            pk=self.execution_id)
+        strategy_execution.short_symbol = self.helper.get_short_symbol()
+        strategy_execution.long_symbol = self.helper.get_long_symbol()
+        strategy_execution.save()
         self.short.execute()
 
     def run_long(self):
@@ -96,3 +101,6 @@ class ShortLong(strategy.Strategy):
         self.leverage = borrow_to_max_borrow_ratio * account_leverage
         execution.leverage = self.leverage
         execution.save()
+
+    def fetch_symbols(self):
+        symbols = self.exchange.fetch_symbols()['data']

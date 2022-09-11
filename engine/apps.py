@@ -6,11 +6,11 @@ class EngineConfig(AppConfig):
     name = 'engine'
 
     def ready(self):
-        import threading
-        from .kucoin_websocket_feed import market_data_feed
-        from .algo_engine import Engine
-        Engine.init()
-        market_data_feeds = threading.Thread(
-            target=market_data_feed, daemon=True)
-        market_data_feeds.start()
+        # import threading
+        # from .kucoin_websocket_feed import market_data_feed
+        # from .algo_engine import Engine
+        # Engine.init()
+        # market_data_feeds = threading.Thread(
+        #     target=market_data_feed, daemon=True)
+        # market_data_feeds.start()
         pass

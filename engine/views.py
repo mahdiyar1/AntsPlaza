@@ -2,8 +2,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .algo_engine import Engine
-from .models import Order, Strategy, StrategySetting, StrategySymbol, Symbol
-from .serializers import OrderSerializer, PeriodicTaskSerializer, StrategySerializer, StrategySettingSerializer, StrategySymbolSerializer, SymbolSerializer
+from .models import ApiInformation, ManualSymbol, Order, Strategy, StrategySetting, StrategySymbol, Symbol
+from .serializers import ApiInformationSerializer, ManuelSymbolSerializer, OrderSerializer, PeriodicTaskSerializer, StrategySerializer, StrategySettingSerializer, StrategySymbolSerializer, SymbolSerializer
 from .tasks import check_risk_all, run_long_all, run_short_all, terminate_all, terminate_long_all, terminate_short_all
 from django_celery_beat.models import PeriodicTask
 
@@ -16,6 +16,16 @@ class OrderViewSet(ModelViewSet):
 class StrategySettingViewSet(ModelViewSet):
     queryset = StrategySetting.objects.all()
     serializer_class = StrategySettingSerializer
+
+
+class ManuelSymbolViewSet(ModelViewSet):
+    queryset = ManualSymbol.objects.all()
+    serializer_class = ManuelSymbolSerializer
+
+
+class ApiInformationViewSet(ModelViewSet):
+    queryset = ApiInformation.objects.all()
+    serializer_class = ApiInformationSerializer
 
 
 class StrategySymbolViewSet(ModelViewSet):
@@ -37,10 +47,12 @@ class StrategyViewSet(ModelViewSet):
     queryset = Strategy.objects.all()
     serializer_class = StrategySerializer
 
+
 @api_view()
 def run_short_all_strategies(Request):
     # run_short_all.delay(20)
-    Engine.run_short_all(20)
+    # Engine.run_short_all(28)
+    Engine.fetch_symbols(3)
     return Response('ok')
 
 
@@ -67,8 +79,8 @@ def terminate_long_all_strategies(Request):
 
 @api_view()
 def terminate_all_strategies(Request):
-    terminate_all.delay()
-    # Engine.terminate_all()
+    # terminate_all.delay()
+    Engine.terminate_all()
     return Response('ok')
 
 
@@ -92,7 +104,3 @@ def update_strategy_symbol(request):
         symbol.save()
 
     return Response('ok')
-
-
-# @api_view()
-# def strategy_return():

@@ -1,7 +1,7 @@
 from dataclasses import fields
 from rest_framework import serializers
 from django_celery_beat.models import PeriodicTask
-from .models import Order, Strategy, StrategyExecution, StrategySetting, StrategySymbol, Symbol
+from .models import ApiInformation, ManualSymbol, Order, Strategy, StrategyExecution, StrategySetting, StrategySymbol, Symbol
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -20,6 +20,18 @@ class StrategySettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = StrategySetting
         fields = ['id', 'name', 'value', 'comment', 'strategy']
+
+
+class ManuelSymbolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ManualSymbol
+        fields = ['id', 'kucoin_symbol_choice', 'binance_symbol_choice']
+
+
+class ApiInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApiInformation
+        fields = ['id', 'key', 'secret', 'password', 'trader', 'exchange']
 
 
 class StrategySymbolSerializer(serializers.ModelSerializer):
@@ -48,7 +60,8 @@ class StrategyExecutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = StrategyExecution
         fields = ['last_short_return_ratio', 'last_long_return_ratio',
-                  'last_short_return', 'last_long_return']
+                  'last_short_return', 'last_long_return', 'is_strategy_end', 'short_symbol', 'long_symbol',
+                  'is_short_success', 'is_long_success', 'is_short_closed', 'is_long_closed']
 
 
 class StrategySerializer(serializers.ModelSerializer):

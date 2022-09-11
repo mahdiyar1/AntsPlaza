@@ -23,3 +23,7 @@ class AntsPlazaExchange():
     @abstractclassmethod
     def repay_margin(self, currency, sequence, size):
         pass
+
+    @abstractclassmethod
+    def fetch_symbols(self):
+        pass

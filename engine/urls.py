@@ -10,6 +10,8 @@ router.register('strategy_symbols', views.StrategySymbolViewSet)
 router.register('symbols', views.SymbolViewSet)
 router.register('strategy_executions', views.PeriodicTaskViewSet)
 router.register('strategy', views.StrategyViewSet)
+router.register('manual_symbol', views.ManuelSymbolViewSet)
+router.register('api_information', views.ApiInformationViewSet)
 
 urlpatterns = [
     path('run_short/', views.run_short_all_strategies),

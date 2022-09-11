@@ -56,3 +56,8 @@ class LoanAdmin(admin.ModelAdmin):
 @admin.register(models.StrategyExecution)
 class ExecutionAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(models.ManualSymbol)
+class ManualSymbolAdmin(admin.ModelAdmin):
+    pass

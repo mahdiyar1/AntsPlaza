@@ -95,6 +95,10 @@ class Engine:
         for strategy_id in cls.strategies.keys():
             cls.check_risk(strategy_id)
 
+    @classmethod
+    def fetch_symbols(cls, strategy_id):
+        cls.strategies[strategy_id].fetch_symbols()
+
     @staticmethod
     def create_exchange(information):
         exchange_id = information.api_information.exchange.id

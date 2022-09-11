@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django_celery_beat.models import PeriodicTask
 
 
 class Trader(models.Model):
@@ -53,6 +54,44 @@ class StrategySetting(models.Model):
     strategy = models.ForeignKey(Strategy, on_delete=models.PROTECT)
 
 
+class Symbol(models.Model):
+    id = models.CharField(max_length=255, primary_key=True)
+    base = models.CharField(max_length=255)
+    quote = models.CharField(max_length=255)
+    base_min_amount = models.DecimalField(max_digits=24, decimal_places=12)
+    base_precision = models.IntegerField()
+    market_order_min_fund = models.DecimalField(
+        max_digits=24, decimal_places=12)
+    market_order_precision_fund = models.IntegerField()
+    taker_fee_rate = models.DecimalField(
+        max_digits=24, decimal_places=12)
+    maker_fee_rate = models.DecimalField(
+        max_digits=24, decimal_places=12)
+    kline_open_1_min = models.DecimalField(max_digits=24, decimal_places=12)
+    # exchange_is_margin_enabled = models.BooleanField()
+    # exchange_is_trade_enabled = models.BooleanField()
+
+
+class ManualSymbol(models.Model):
+    ENABLE = 'E'
+    SHORT_ONLY = 'S'
+    LONG_ONLY = 'L'
+    DISABLE = 'D'
+
+    SYMBOL_CHOICES = [
+        (ENABLE, 'Enable'),
+        (SHORT_ONLY, 'ShortOnly'),
+        (LONG_ONLY, 'LongOnly'),
+        (DISABLE, 'Disable')
+    ]
+
+    id = models.CharField(max_length=255, primary_key=True)
+    kucoin_symbol_choice = models.CharField(
+        max_length=1, choices=SYMBOL_CHOICES, default=ENABLE)
+    binance_symbol_choice = models.CharField(
+        max_length=1, choices=SYMBOL_CHOICES, default=ENABLE)
+
+
 class StrategyExecution(models.Model):
     strategy = models.ForeignKey(Strategy, on_delete=models.PROTECT)
     date_time_begin = models.DateTimeField(auto_now_add=True)
@@ -79,22 +118,12 @@ class StrategyExecution(models.Model):
         max_digits=24, decimal_places=12, null=True)
     last_long_return = models.DecimalField(
         max_digits=24, decimal_places=12, null=True)
-    task_id = models.IntegerField()
-
-class Symbol(models.Model):
-    id = models.CharField(max_length=255, primary_key=True)
-    base = models.CharField(max_length=255)
-    quote = models.CharField(max_length=255)
-    base_min_amount = models.DecimalField(max_digits=24, decimal_places=12)
-    base_precision = models.IntegerField()
-    market_order_min_fund = models.DecimalField(
-        max_digits=24, decimal_places=12)
-    market_order_precision_fund = models.IntegerField()
-    taker_fee_rate = models.DecimalField(
-        max_digits=24, decimal_places=12)
-    maker_fee_rate = models.DecimalField(
-        max_digits=24, decimal_places=12)
-    kline_open_1_min = models.DecimalField(max_digits=24, decimal_places=12)
+    task = models.ForeignKey(
+        PeriodicTask, on_delete=models.SET_NULL, null=True)
+    short_symbol = models.ForeignKey(
+        Symbol, related_name='execution_short_symbol', on_delete=models.PROTECT, null=True)
+    long_symbol = models.ForeignKey(
+        Symbol, related_name='execution_long_symbol', on_delete=models.PROTECT, null=True)
 
 
 class Order(models.Model):
